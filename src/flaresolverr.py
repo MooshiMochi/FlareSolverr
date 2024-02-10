@@ -4,7 +4,7 @@ import os
 import sys
 
 import certifi
-from bottle import run, response, Bottle, request, ServerAdapter
+from bottle import hook, run, response, Bottle, request, ServerAdapter
 
 from bottle_plugins.error_plugin import error_plugin
 from bottle_plugins.logger_plugin import logger_plugin
@@ -24,6 +24,15 @@ class JSONErrorBottle(Bottle):
 
 
 app = JSONErrorBottle()
+
+
+@hook('before_request')
+def before_request():
+    api_key = request.query.api_key or request.headers.get('Authorization')
+    if api_key is not None and api_key != os.environ.get("key"):
+        response.status = 401
+        response.content_type = 'application/json'
+        return utils.object_to_dict(response)
 
 
 @app.route('/')
