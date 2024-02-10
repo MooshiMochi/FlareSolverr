@@ -100,6 +100,8 @@ if __name__ == "__main__":
     server_host = os.environ.get('HOST', '0.0.0.0')
     server_port = int(os.environ.get('PORT', 8191))
     api_key = os.environ.get('KEY')
+    if not api_key:
+        os.environ["KEY"] = "MySecretKey"  # set the default key
 
     # configure logger
     logger_format = '%(asctime)s %(levelname)-8s %(message)s'
