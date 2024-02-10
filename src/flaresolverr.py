@@ -99,6 +99,7 @@ if __name__ == "__main__":
     headless = utils.get_config_headless()
     server_host = os.environ.get('HOST', '0.0.0.0')
     server_port = int(os.environ.get('PORT', 8191))
+    api_key = os.environ.get('KEY')
 
     # configure logger
     logger_format = '%(asctime)s %(levelname)-8s %(message)s'
@@ -119,6 +120,7 @@ if __name__ == "__main__":
 
     logging.info(f'FlareSolverr {utils.get_flaresolverr_version()}')
     logging.debug('Debug log enabled')
+    logging.info(f'Environment API key: {api_key}')
 
     # test browser installation
     flaresolverr_service.test_browser_installation()
