@@ -48,6 +48,11 @@ Supported architectures are:
 We provide a `docker-compose.yml` configuration file. Clone this repository and execute `docker-compose up -d` to start
 the container.
 
+You can also create your own local image using the following command.
+```bash
+docker build -t local-flaresolverr .
+```
+
 If you prefer the `docker cli` execute the following command.
 ```bash
 docker run -d \
@@ -57,6 +62,8 @@ docker run -d \
   --restart unless-stopped \
   ghcr.io/flaresolverr/flaresolverr:latest
 ```
+> **Note**:
+> You can replace the image to be the local image created.
 
 If your host OS is Debian, make sure `libseccomp2` version is 2.5.x. You can check the version with `sudo apt-cache policy libseccomp2` 
 and update the package with `sudo apt install libseccomp2=2.5.1-1~bpo10+1` or `sudo apt install libseccomp2=2.5.1-1+deb11u1`.
