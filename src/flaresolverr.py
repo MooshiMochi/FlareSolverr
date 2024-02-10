@@ -2,9 +2,10 @@ import json
 import logging
 import os
 import sys
+from functools import wraps
 
 import certifi
-from bottle import hook, run, response, Bottle, request, ServerAdapter
+from bottle import abort, hook, run, response, Bottle, request, ServerAdapter
 
 from bottle_plugins.error_plugin import error_plugin
 from bottle_plugins.logger_plugin import logger_plugin
@@ -18,6 +19,7 @@ class JSONErrorBottle(Bottle):
     """
     Handle 404 errors
     """
+
     def default_error_handler(self, res):
         response.content_type = 'application/json'
         return json.dumps(dict(error=res.body, status_code=res.status_code))
@@ -26,16 +28,21 @@ class JSONErrorBottle(Bottle):
 app = JSONErrorBottle()
 
 
-@hook('before_request')
-def before_request():
-    api_key = request.query.api_key or request.headers.get('Authorization')
-    if api_key is not None and api_key != os.environ.get("key"):
-        response.status = 401
-        response.content_type = 'application/json'
-        return utils.object_to_dict(response)
+def require_api_key(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        api_key = request.query.api_key or request.headers.get('Authorization')
+        environ_key = os.environ.get("KEY")
+        if environ_key is not None and (not api_key or api_key != environ_key):
+            response.status = 401  # Unauthorized
+            return {"status": 401, "error": "Unauthorized", "message": "API key is missing or invalid."}
+        return f(*args, **kwargs)
+
+    return decorated_function
 
 
 @app.route('/')
+@require_api_key
 def index():
     """
     Show welcome message
@@ -45,6 +52,7 @@ def index():
 
 
 @app.route('/health')
+@require_api_key
 def health():
     """
     Healthcheck endpoint.
@@ -55,6 +63,7 @@ def health():
 
 
 @app.post('/v1')
+@require_api_key
 def controller_v1():
     """
     Controller v1
@@ -75,6 +84,7 @@ if __name__ == "__main__":
     # https://stackoverflow.com/a/27694505
     if os.name == 'nt':
         import multiprocessing
+
         multiprocessing.freeze_support()
 
     # fix ssl certificates for compiled binaries
@@ -120,6 +130,7 @@ if __name__ == "__main__":
     prometheus_plugin.setup()
     app.install(prometheus_plugin.prometheus_plugin)
 
+
     # start webserver
     # default server 'wsgiref' does not support concurrent requests
     # https://github.com/FlareSolverr/FlareSolverr/issues/680
@@ -128,4 +139,6 @@ if __name__ == "__main__":
         def run(self, handler):
             from waitress import serve
             serve(handler, host=self.host, port=self.port, asyncore_use_poll=True)
+
+
     run(app, host=server_host, port=server_port, quiet=True, server=WaitressServerPoll)
